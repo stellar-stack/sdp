@@ -12,6 +12,7 @@ export interface Post {
   video: string | null
   post_type: PostType
   community: string | null
+  community_id: number | null
   reactions_count: number
   reactions_summary: Partial<Record<ReactionType, number>>
   comments_count: number

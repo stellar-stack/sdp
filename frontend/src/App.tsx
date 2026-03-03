@@ -26,6 +26,7 @@ import FollowingPage from '@/pages/profile/FollowingPage'
 import CommunitiesPage from '@/pages/communities/CommunitiesPage'
 import CommunityDetailPage from '@/pages/communities/CommunityDetailPage'
 import CreateCommunityPage from '@/pages/communities/CreateCommunityPage'
+import EditCommunityPage from '@/pages/communities/EditCommunityPage'
 import MessagesPage from '@/pages/messages/MessagesPage'
 import ConversationPage from '@/pages/messages/ConversationPage'
 import NotificationsPage from '@/pages/notifications/NotificationsPage'
@@ -87,6 +88,7 @@ function AppInner() {
           <Route path="/communities" element={<CommunitiesPage />} />
           <Route element={<RoleGuard roles={['ADMIN']} />}>
             <Route path="/communities/create" element={<CreateCommunityPage />} />
+            <Route path="/communities/:communityId/edit" element={<EditCommunityPage />} />
           </Route>
           <Route path="/communities/:communityId" element={<CommunityDetailPage />} />
           <Route path="/messages" element={<MessagesPage />} />

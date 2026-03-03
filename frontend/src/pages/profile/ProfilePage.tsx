@@ -44,10 +44,10 @@ export default function ProfilePage() {
   if (profileLoading) {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}>
+        <div className="rounded-2xl overflow-hidden bg-bg-card border border-border">
           <Skeleton className="h-44 w-full rounded-none" />
           <div className="px-5 pb-5 -mt-10">
-            <Skeleton className="h-20 w-20 rounded-full border-4" style={{ borderColor: '#1a1a1a' }} />
+            <Skeleton className="h-20 w-20 rounded-full border-4 border-bg-card" />
             <div className="mt-4 space-y-2">
               <Skeleton className="h-6 w-40" />
               <Skeleton className="h-4 w-24" />
@@ -65,7 +65,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-4">
       {/* Profile card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}>
+      <div className="rounded-2xl overflow-hidden bg-bg-card border border-border">
         {/* Tall banner */}
         <div
           className="h-44 w-full relative"
@@ -76,7 +76,7 @@ export default function ProfilePage() {
           {/* Decorative green glow */}
           <div
             className="absolute bottom-0 left-1/2 -translate-x-1/2 h-24 w-48 blur-2xl pointer-events-none"
-            style={{ background: 'rgba(0,255,132,0.12)' }}
+            style={{ background: 'rgb(var(--color-accent) / 0.12)' }}
           />
         </div>
 
@@ -88,12 +88,12 @@ export default function ProfilePage() {
                 user={profile}
                 size="xl"
                 className="ring-4"
-                style={{ '--ring-color': '#1a1a1a' } as React.CSSProperties}
+                style={{ '--ring-color': 'rgb(var(--color-bg-card))' } as React.CSSProperties}
               />
-              {/* Green ring overlay */}
+              {/* Accent ring overlay */}
               <div
                 className="absolute inset-0 rounded-full pointer-events-none"
-                style={{ boxShadow: '0 0 0 3px rgba(0,255,132,0.5)', borderRadius: '50%' }}
+                style={{ boxShadow: '0 0 0 3px rgb(var(--color-accent) / 0.5)', borderRadius: '50%' }}
               />
             </div>
 
@@ -114,7 +114,7 @@ export default function ProfilePage() {
                   />
                   <Link
                     to="/messages"
-                    className="p-2 rounded-lg border border-border text-text-secondary hover:text-white hover:bg-bg-elevated transition-colors"
+                    className="p-2 rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
                   >
                     <MessageCircle size={16} />
                   </Link>
@@ -126,13 +126,13 @@ export default function ProfilePage() {
           {/* Name + role */}
           <div className="mb-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-white tracking-tight">
+              <h1 className="text-xl font-bold text-text-primary tracking-tight">
                 {profile.first_name} {profile.last_name}
               </h1>
               {profile.role !== 'USER' && (
                 <span
                   className="px-2 py-0.5 rounded-full text-[11px] font-bold"
-                  style={{ background: 'rgba(0,255,132,0.15)', color: '#00ff84', border: '1px solid rgba(0,255,132,0.3)' }}
+                  style={{ background: 'rgb(var(--color-accent) / 0.15)', color: 'rgb(var(--color-accent))', border: '1px solid rgb(var(--color-accent) / 0.3)' }}
                 >
                   {profile.role}
                 </span>
@@ -161,26 +161,23 @@ export default function ProfilePage() {
           </div>
 
           {/* Follow stats */}
-          <div
-            className="flex items-center divide-x rounded-xl overflow-hidden"
-            style={{ background: '#262626', border: '1px solid #333', divideColor: '#333' }}
-          >
+          <div className="flex items-center divide-x divide-border rounded-xl overflow-hidden bg-bg-elevated border border-border">
             <Link
               to={`/profile/${username}/followers`}
-              className="flex-1 text-center py-3 hover:bg-white/5 transition-colors"
+              className="flex-1 text-center py-3 hover:bg-surface-hover transition-colors"
             >
-              <p className="text-lg font-bold text-white">{formatCount(profile.followers_count)}</p>
+              <p className="text-lg font-bold text-text-primary">{formatCount(profile.followers_count)}</p>
               <p className="text-[11px] text-text-muted">Followers</p>
             </Link>
             <Link
               to={`/profile/${username}/following`}
-              className="flex-1 text-center py-3 hover:bg-white/5 transition-colors border-l border-border"
+              className="flex-1 text-center py-3 hover:bg-surface-hover transition-colors"
             >
-              <p className="text-lg font-bold text-white">{formatCount(profile.following_count)}</p>
+              <p className="text-lg font-bold text-text-primary">{formatCount(profile.following_count)}</p>
               <p className="text-[11px] text-text-muted">Following</p>
             </Link>
-            <div className="flex-1 text-center py-3 border-l border-border">
-              <p className="text-lg font-bold text-white">{formatCount(posts.length)}</p>
+            <div className="flex-1 text-center py-3">
+              <p className="text-lg font-bold text-text-primary">{formatCount(posts.length)}</p>
               <p className="text-[11px] text-text-muted">Posts</p>
             </div>
           </div>
@@ -189,15 +186,15 @@ export default function ProfilePage() {
 
       {/* Communities */}
       {userCommunities && userCommunities.length > 0 && (
-        <div className="rounded-2xl p-5" style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}>
+        <div className="rounded-2xl p-5 bg-bg-card border border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Users size={15} style={{ color: '#00ff84' }} />
-            <h2 className="font-semibold text-white text-sm">
+            <Users size={15} className="text-accent" />
+            <h2 className="font-semibold text-text-primary text-sm">
               {isOwnProfile ? 'My Communities' : 'Communities'}
             </h2>
             <span
               className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-              style={{ background: 'rgba(0,255,132,0.12)', color: '#00ff84' }}
+              style={{ background: 'rgb(var(--color-accent) / 0.12)', color: 'rgb(var(--color-accent))' }}
             >
               {userCommunities.length}
             </span>
@@ -207,8 +204,7 @@ export default function ProfilePage() {
               <Link
                 key={community.id}
                 to={`/communities/${community.id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-white transition-colors"
-                style={{ background: '#262626', border: '1px solid #333' }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary transition-colors bg-bg-elevated border border-border"
               >
                 <div className={cn(
                   'h-4 w-4 rounded flex items-center justify-center shrink-0 bg-gradient-to-br',
@@ -227,7 +223,7 @@ export default function ProfilePage() {
 
       {/* Posts section */}
       <div className="flex items-center justify-between px-1">
-        <h2 className="font-bold text-white tracking-tight">Posts</h2>
+        <h2 className="font-bold text-text-primary tracking-tight">Posts</h2>
       </div>
 
       {postsLoading && <div className="space-y-4">{[1, 2].map((i) => <PostSkeleton key={i} />)}</div>}

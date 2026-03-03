@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -5,10 +6,10 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useLogin } from '@/queries/auth.queries'
 import { loginSchema, type LoginInput } from '@/lib/validators'
-import { extractErrorMessage } from '@/lib/utils'
+import { extractErrorMessage, parseApiErrors } from '@/lib/utils'
 import GoogleOAuthButton from '@/components/auth/GoogleOAuthButton'
 import GithubOAuthButton from '@/components/auth/GithubOAuthButton'
-import { MessageCircle, Users, Zap } from 'lucide-react'
+import { MessageCircle, Users, Zap, Eye, EyeOff } from 'lucide-react'
 
 const highlights = [
   { icon: Users, text: '10,000+ members across hundreds of communities' },
@@ -19,27 +20,37 @@ const highlights = [
 export default function LoginPage() {
   const navigate = useNavigate()
   const { mutate: login, isPending } = useLogin()
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
   const onSubmit = (data: LoginInput) => {
     login(data, {
       onSuccess: () => navigate('/feed'),
-      onError: (err) => toast.error(extractErrorMessage(err)),
+      onError: (err) => {
+        const fieldErrors = parseApiErrors(err)
+        if (fieldErrors) {
+          Object.entries(fieldErrors).forEach(([key, msg]) =>
+            setError(key as keyof LoginInput, { message: msg })
+          )
+        } else {
+          toast.error(extractErrorMessage(err))
+        }
+      },
     })
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0e0e0e' }}>
+    <div className="flex min-h-screen bg-bg-primary">
 
       {/* ── Left panel — branding ── */}
       <div
-        className="hidden lg:flex lg:w-5/12 flex-col justify-between p-12 relative overflow-hidden"
-        style={{ background: '#111111', borderRight: '1px solid #2d2d2d' }}
+        className="hidden lg:flex lg:w-5/12 flex-col justify-between p-12 relative overflow-hidden bg-bg-secondary border-r border-border"
       >
         {/* Ambient glow */}
         <div
@@ -59,12 +70,12 @@ export default function LoginPage() {
           >
             <span className="font-black text-sm" style={{ color: '#0e0e0e' }}>V</span>
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">Voyage</span>
+          <span className="text-xl font-bold text-text-primary tracking-tight">Voyage</span>
         </div>
 
         {/* Main copy */}
         <div className="relative">
-          <h2 className="text-4xl font-black text-white leading-tight tracking-tighter mb-4">
+          <h2 className="text-4xl font-black text-text-primary leading-tight tracking-tighter mb-4">
             Where curious<br />minds meet.
           </h2>
           <p className="text-text-secondary text-base leading-relaxed mb-10">
@@ -106,10 +117,10 @@ export default function LoginPage() {
             >
               <span className="font-black text-sm" style={{ color: '#0e0e0e' }}>V</span>
             </div>
-            <span className="text-lg font-bold text-white">Voyage</span>
+            <span className="text-lg font-bold text-text-primary">Voyage</span>
           </div>
 
-          <h1 className="text-3xl font-black text-white tracking-tight mb-1">Welcome back</h1>
+          <h1 className="text-3xl font-black text-text-primary tracking-tight mb-1">Welcome back</h1>
           <p className="text-text-secondary text-sm mb-8">Sign in to continue your voyage.</p>
 
           {/* OAuth */}
@@ -119,9 +130,9 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-px flex-1" style={{ background: '#2d2d2d' }} />
+            <div className="h-px flex-1 bg-border" />
             <span className="text-xs text-text-muted">or continue with email</span>
-            <div className="h-px flex-1" style={{ background: '#2d2d2d' }} />
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           {/* Form */}
@@ -139,13 +150,24 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">Password</label>
-              <input
-                {...register('password')}
-                type="password"
-                placeholder="••••••••"
-                className="input-base"
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  {...register('password')}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  className="input-base pr-11"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
               {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
             </div>
 

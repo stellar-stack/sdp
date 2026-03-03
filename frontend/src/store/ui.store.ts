@@ -22,9 +22,14 @@ function resolveTheme(theme: Theme): 'light' | 'dark' {
 
 const storedTheme = (localStorage.getItem('voyage-theme') as Theme) ?? 'system'
 
+// Apply theme class immediately on module load (avoids flash)
+const _initialResolved = resolveTheme(storedTheme)
+document.documentElement.classList.toggle('dark', _initialResolved === 'dark')
+document.documentElement.classList.toggle('light', _initialResolved === 'light')
+
 export const useUIStore = create<UIState>((set) => ({
   theme: storedTheme,
-  resolvedTheme: resolveTheme(storedTheme),
+  resolvedTheme: _initialResolved,
   sidebarOpen: false,
   activeModal: null,
   modalData: null,
@@ -32,7 +37,9 @@ export const useUIStore = create<UIState>((set) => ({
   setTheme: (theme) => {
     localStorage.setItem('voyage-theme', theme)
     const resolved = resolveTheme(theme)
-    document.documentElement.classList.toggle('dark', resolved === 'dark')
+    const root = document.documentElement
+    root.classList.toggle('dark', resolved === 'dark')
+    root.classList.toggle('light', resolved === 'light')
     set({ theme, resolvedTheme: resolved })
   },
 

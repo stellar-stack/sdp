@@ -68,7 +68,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = (
             'id', 'user', 'caption', 'content', 'image', 'video',
-            'post_type', 'community', 'reactions_count', 'reactions_summary',
+            'post_type', 'community', 'community_id', 'reactions_count', 'reactions_summary',
             'comments_count', 'shares_count', 'user_reaction', 'is_bookmarked',
             'created_at',
         )

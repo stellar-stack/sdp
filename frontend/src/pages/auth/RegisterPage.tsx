@@ -4,11 +4,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
-import { Upload, User, ArrowRight } from 'lucide-react'
+import { Upload, User, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRegister } from '@/queries/auth.queries'
 import { registerSchema, type RegisterInput } from '@/lib/validators'
-import { extractErrorMessage } from '@/lib/utils'
+import { extractErrorMessage, parseApiErrors } from '@/lib/utils'
 import GoogleOAuthButton from '@/components/auth/GoogleOAuthButton'
 import GithubOAuthButton from '@/components/auth/GithubOAuthButton'
 
@@ -17,12 +17,17 @@ export default function RegisterPage() {
   const { mutate: registerUser, isPending } = useRegister()
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
     handleSubmit,
+    watch,
+    setError,
     formState: { errors },
   } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) })
+
+  const passwordValue = watch('password', '')
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'image/*': [] },
@@ -42,18 +47,26 @@ export default function RegisterPage() {
           toast.success('Account created! Check your email to verify.')
           navigate('/login')
         },
-        onError: (err) => toast.error(extractErrorMessage(err)),
+        onError: (err) => {
+          const fieldErrors = parseApiErrors(err)
+          if (fieldErrors) {
+            Object.entries(fieldErrors).forEach(([key, msg]) =>
+              setError(key as keyof RegisterInput, { message: msg })
+            )
+          } else {
+            toast.error(extractErrorMessage(err))
+          }
+        },
       }
     )
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0e0e0e' }}>
+    <div className="flex min-h-screen bg-bg-primary">
 
       {/* ── Left panel — branding ── */}
       <div
-        className="hidden lg:flex lg:w-5/12 flex-col justify-between p-12 relative overflow-hidden"
-        style={{ background: '#111111', borderRight: '1px solid #2d2d2d' }}
+        className="hidden lg:flex lg:w-5/12 flex-col justify-between p-12 relative overflow-hidden bg-bg-secondary border-r border-border"
       >
         <div
           className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none"
@@ -68,7 +81,7 @@ export default function RegisterPage() {
           >
             <span className="font-black text-sm" style={{ color: '#0e0e0e' }}>V</span>
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">Voyage</span>
+          <span className="text-xl font-bold text-text-primary tracking-tight">Voyage</span>
         </div>
 
         {/* Quote / pull copy */}
@@ -77,7 +90,7 @@ export default function RegisterPage() {
             className="w-12 h-1 rounded-full mb-6"
             style={{ background: '#00ff84' }}
           />
-          <blockquote className="text-3xl font-black text-white leading-tight tracking-tighter mb-6">
+          <blockquote className="text-3xl font-black text-text-primary leading-tight tracking-tighter mb-6">
             "Start sharing.<br />Start connecting.<br />
             <span style={{ color: '#00ff84' }}>Start your Voyage.</span>"
           </blockquote>
@@ -102,10 +115,10 @@ export default function RegisterPage() {
             <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: '#00ff84' }}>
               <span className="font-black text-sm" style={{ color: '#0e0e0e' }}>V</span>
             </div>
-            <span className="text-lg font-bold text-white">Voyage</span>
+            <span className="text-lg font-bold text-text-primary">Voyage</span>
           </div>
 
-          <h1 className="text-3xl font-black text-white tracking-tight mb-1">Create your account</h1>
+          <h1 className="text-3xl font-black text-text-primary tracking-tight mb-1">Create your account</h1>
           <p className="text-text-secondary text-sm mb-8">Free forever. No credit card needed.</p>
 
           {/* OAuth */}
@@ -115,9 +128,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex items-center gap-3 mb-6">
-            <div className="h-px flex-1" style={{ background: '#2d2d2d' }} />
+            <div className="h-px flex-1 bg-border" />
             <span className="text-xs text-text-muted">or register with email</span>
-            <div className="h-px flex-1" style={{ background: '#2d2d2d' }} />
+            <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -135,9 +148,9 @@ export default function RegisterPage() {
                 ) : (
                   <div
                     className="h-20 w-20 rounded-full flex flex-col items-center justify-center gap-1.5 transition-colors"
-                    style={{ background: '#1a1a1a', border: '2px dashed #2d2d2d' }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(0,255,132,0.5)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = '#2d2d2d')}
+                    style={{ background: 'rgb(var(--color-bg-elevated))', border: '2px dashed rgb(var(--color-border))' }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgb(var(--color-accent) / 0.5)')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgb(var(--color-border))')}
                   >
                     <User size={20} className="text-text-muted" />
                     <Upload size={11} className="text-text-muted" />
@@ -168,8 +181,46 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <input {...register('password')} type="password" placeholder="Password (min 8 characters)" className="input-base" autoComplete="new-password" />
+              <div className="relative">
+                <input
+                  {...register('password')}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  className="input-base pr-11"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
               {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
+              {/* Password strength indicator */}
+              {passwordValue && (
+                <div className="mt-2 space-y-1">
+                  {[
+                    { label: 'At least 8 characters', ok: passwordValue.length >= 8 },
+                    { label: 'One uppercase letter', ok: /[A-Z]/.test(passwordValue) },
+                    { label: 'One number', ok: /[0-9]/.test(passwordValue) },
+                    { label: 'One special character', ok: /[^a-zA-Z0-9]/.test(passwordValue) },
+                  ].map(({ label, ok }) => (
+                    <div key={label} className="flex items-center gap-1.5">
+                      <div
+                        className="h-1.5 w-1.5 rounded-full shrink-0 transition-colors"
+                        style={{ background: ok ? '#00ff84' : '#5a5a5a' }}
+                      />
+                      <span className="text-xs transition-colors" style={{ color: ok ? '#00ff84' : '#5a5a5a' }}>
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button

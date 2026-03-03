@@ -132,6 +132,7 @@ REST_FRAMEWORK = {
         'comment_create': '60/hour',
         'report': '20/hour',
         'message_send': '120/hour',
+        'suggestion': '60/minute',
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': [

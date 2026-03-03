@@ -1,14 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useDropzone } from 'react-dropzone'
-import { motion } from 'framer-motion'
-import { X, Image, Video, Type, Upload } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, Image, Video, Type, Upload, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUIStore } from '@/store/ui.store'
 import { useCreatePost } from '@/queries/posts.queries'
 import { useAuthStore } from '@/store/auth.store'
 import { UserAvatar } from '@/components/user/UserAvatar'
 import { extractErrorMessage } from '@/lib/utils'
+import { postsApi } from '@/api'
 import type { PostType } from '@/types'
 
 const tabs: { type: PostType; icon: typeof Type; label: string }[] = [
@@ -28,6 +29,14 @@ export function CreatePostModal() {
   const [content, setContent] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const [mediaPreview, setMediaPreview] = useState<string | null>(null)
+  const [suggestion, setSuggestion] = useState<{
+    suggested_caption: string | null
+    suggested_community: { id: number; name: string } | null
+  } | null>(null)
+  const [suggestionLoading, setSuggestionLoading] = useState(false)
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false)
+  const [suggestedCommunityId, setSuggestedCommunityId] = useState<number | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: postType === 'IMAGE' ? { 'image/*': [] } : { 'video/*': [] },
@@ -39,6 +48,29 @@ export function CreatePostModal() {
     },
   })
 
+  // Debounced AI suggestion (600ms after user stops typing)
+  useEffect(() => {
+    if (suggestionDismissed) return
+    const combined = (caption + ' ' + content).trim()
+    if (combined.length < 20) {
+      setSuggestion(null)
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setSuggestionLoading(true)
+      try {
+        const result = await postsApi.getSuggestion({ content, caption })
+        setSuggestion(result)
+      } catch {
+        // silently fail — suggestions are optional
+      } finally {
+        setSuggestionLoading(false)
+      }
+    }, 600)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [content, caption, suggestionDismissed])
+
   const handleClose = () => {
     closeModal()
     setCaption('')
@@ -46,6 +78,9 @@ export function CreatePostModal() {
     setMediaFile(null)
     setMediaPreview(null)
     setPostType('TEXT')
+    setSuggestion(null)
+    setSuggestionDismissed(false)
+    setSuggestedCommunityId(null)
   }
 
   const handleSubmit = () => {
@@ -58,6 +93,7 @@ export function CreatePostModal() {
       return
     }
 
+    const effectiveCommunityId = communityId ?? suggestedCommunityId ?? undefined
     createPost(
       {
         post_type: postType,
@@ -65,6 +101,7 @@ export function CreatePostModal() {
         content: postType === 'TEXT' ? content.trim() : undefined,
         image: postType === 'IMAGE' ? mediaFile! : undefined,
         video: postType === 'VIDEO' ? mediaFile! : undefined,
+        community: effectiveCommunityId,
       },
       {
         onSuccess: () => {
@@ -155,6 +192,82 @@ export function CreatePostModal() {
                   className="input-base resize-none text-sm"
                 />
               )}
+
+              {/* AI Suggestion panel */}
+              <AnimatePresence>
+                {(suggestionLoading || (suggestion && !suggestionDismissed && (suggestion.suggested_caption || suggestion.suggested_community))) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="rounded-xl border p-3 space-y-2"
+                    style={{ background: 'rgb(var(--color-accent) / 0.05)', borderColor: 'rgb(var(--color-accent) / 0.2)' }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-accent" />
+                        <span className="text-xs font-semibold text-accent">
+                          AI Suggestion
+                        </span>
+                      </div>
+                      {!suggestionLoading && (
+                        <button
+                          onClick={() => { setSuggestionDismissed(true); setSuggestion(null) }}
+                          className="text-text-muted hover:text-text-secondary transition-colors"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+
+                    {suggestionLoading ? (
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-3/4 rounded animate-pulse" style={{ background: 'rgb(var(--color-accent) / 0.15)' }} />
+                        <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: 'rgb(var(--color-accent) / 0.1)' }} />
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {suggestion?.suggested_caption && (
+                          <div>
+                            <p className="text-xs text-text-muted mb-1">Suggested caption:</p>
+                            <button
+                              onClick={() => setCaption(suggestion.suggested_caption!)}
+                              className="text-xs text-left rounded-lg px-2.5 py-1.5 w-full text-text-secondary hover:text-text-primary transition-colors"
+                              style={{ background: 'rgb(var(--color-accent) / 0.08)' }}
+                            >
+                              "{suggestion.suggested_caption}"
+                              <span className="ml-1.5 text-[10px] text-accent">
+                                click to apply
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                        {suggestion?.suggested_community && !communityId && (
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-text-muted">Best community:</p>
+                            <button
+                              onClick={() => setSuggestedCommunityId(
+                                suggestedCommunityId === suggestion.suggested_community!.id
+                                  ? null
+                                  : suggestion.suggested_community!.id
+                              )}
+                              className="text-xs font-medium px-2 py-0.5 rounded-full transition-all"
+                              style={
+                                suggestedCommunityId === suggestion.suggested_community.id
+                                  ? { background: 'rgb(var(--color-accent))', color: '#0e0e0e' }
+                                  : { background: 'rgb(var(--color-accent) / 0.12)', color: 'rgb(var(--color-accent))' }
+                              }
+                            >
+                              {suggestedCommunityId === suggestion.suggested_community.id ? '✓ ' : ''}{suggestion.suggested_community.name}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Media dropzone */}
               {(postType === 'IMAGE' || postType === 'VIDEO') && (

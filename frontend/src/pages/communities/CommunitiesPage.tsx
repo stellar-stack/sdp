@@ -8,7 +8,7 @@ import { CommunityCard } from '@/components/community/CommunityCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 
-const CATEGORY_FILTERS = ['All', 'Technology', 'Design', 'Business', 'Science', 'Art', 'Gaming', 'Health']
+const CATEGORY_FILTERS = ['All', 'Programming', 'AI / ML', 'Web Dev', 'Cybersecurity', 'DevOps', 'Data Science', 'Open Source', 'Mobile Dev']
 
 export default function CommunitiesPage() {
   const navigate = useNavigate()
@@ -30,14 +30,14 @@ export default function CommunitiesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Communities</h1>
+          <h1 className="text-xl font-bold text-text-primary tracking-tight">Communities</h1>
           <p className="text-xs text-text-muted mt-0.5">Join communities to learn and share together</p>
         </div>
         {isAdmin && (
           <button
             onClick={() => navigate('/communities/create')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5 active:scale-95"
-            style={{ background: '#00ff84', color: '#0e0e0e', boxShadow: '0 4px 12px rgba(0,255,132,0.25)' }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5 active:scale-95 bg-accent"
+            style={{ color: '#0e0e0e', boxShadow: '0 4px 12px rgb(var(--color-accent) / 0.25)' }}
           >
             <Plus size={15} /> Create
           </button>
@@ -64,8 +64,8 @@ export default function CommunitiesPage() {
             className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150"
             style={
               activeCategory === cat
-                ? { background: '#00ff84', color: '#0e0e0e' }
-                : { background: '#1a1a1a', border: '1px solid #2d2d2d', color: '#a0a0a0' }
+                ? { background: 'rgb(var(--color-accent))', color: '#0e0e0e' }
+                : { background: 'rgb(var(--color-bg-card))', border: '1px solid rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }
             }
           >
             {cat}
@@ -77,7 +77,7 @@ export default function CommunitiesPage() {
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}>
+            <div key={i} className="rounded-2xl overflow-hidden bg-bg-card border border-border">
               <Skeleton className="h-20 w-full rounded-none" />
               <div className="p-4 space-y-2">
                 <Skeleton className="h-4 w-32" />
@@ -115,7 +115,7 @@ export default function CommunitiesPage() {
       {isFetchingNextPage && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-2xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}>
+            <div key={i} className="rounded-2xl overflow-hidden bg-bg-card border border-border">
               <Skeleton className="h-20 w-full rounded-none" />
               <div className="p-4 space-y-2">
                 <Skeleton className="h-4 w-32" />

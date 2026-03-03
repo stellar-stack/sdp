@@ -32,9 +32,8 @@ export function CommunityCard({ community }: CommunityCardProps) {
   return (
     <div
       className={cn(
-        'rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50'
+        'rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50 bg-bg-card border border-border'
       )}
-      style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
     >
       {/* Banner */}
       <div
@@ -53,7 +52,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <Link to={`/communities/${community.id}`}>
-            <h3 className="font-bold text-white text-sm leading-tight hover:text-accent transition-colors">
+            <h3 className="font-bold text-text-primary text-sm leading-tight hover:text-accent transition-colors">
               {community.name}
             </h3>
           </Link>
@@ -69,7 +68,7 @@ export function CommunityCard({ community }: CommunityCardProps) {
             style={
               community.is_member
                 ? { background: 'transparent' }
-                : { background: 'rgba(0,255,132,0.12)', color: '#00ff84', border: '1px solid rgba(0,255,132,0.3)' }
+                : { background: 'rgb(var(--color-accent) / 0.12)', color: 'rgb(var(--color-accent))', border: '1px solid rgb(var(--color-accent) / 0.3)' }
             }
           >
             {isPending ? '…' : community.is_member ? 'Leave' : 'Join'}

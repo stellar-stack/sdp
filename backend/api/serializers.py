@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from .models import User
 
@@ -64,6 +65,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             'username', 'email', 'password',
             'first_name', 'last_name', 'gender', 'dob', 'country', 'bio', 'profile_picture',
         )
+
+    def validate_password(self, value):
+        errors = []
+        if len(value) < 8:
+            errors.append('Password must be at least 8 characters.')
+        if not re.search(r'[A-Z]', value):
+            errors.append('Must contain at least one uppercase letter.')
+        if not re.search(r'[0-9]', value):
+            errors.append('Must contain at least one number.')
+        if not re.search(r'[^a-zA-Z0-9]', value):
+            errors.append('Must contain at least one special character.')
+        if errors:
+            raise serializers.ValidationError(errors)
+        return value
 
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():

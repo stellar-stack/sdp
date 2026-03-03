@@ -37,7 +37,7 @@
 }
 
 .dark {
-  /* Identical — dark class preserved for compatibility */
+  /* Explicit dark mode — same as :root (dark-first design) */
   --color-bg-primary: 14 14 14;
   --color-bg-secondary: 17 17 17;
   --color-bg-card: 26 26 26;
@@ -63,6 +63,36 @@
 
   --color-success: 34 197 94;
   --color-success-muted: 20 83 45;
+}
+
+.light {
+  /* Clean light mode — slate palette */
+  --color-bg-primary: 248 250 252;
+  --color-bg-secondary: 241 245 249;
+  --color-bg-card: 255 255 255;
+  --color-bg-elevated: 226 232 240;
+
+  --color-text-primary: 15 23 42;
+  --color-text-secondary: 71 85 105;
+  --color-text-muted: 148 163 184;
+
+  --color-border: 203 213 225;
+  --color-border-subtle: 226 232 240;
+
+  /* Slightly deeper green for contrast on white */
+  --color-accent: 0 180 90;
+  --color-accent-hover: 0 148 74;
+  --color-accent-muted: 220 252 231;
+
+  --color-violet: 109 62 246;
+
+  --color-surface-hover: 241 245 249;
+
+  --color-danger: 239 68 68;
+  --color-danger-hover: 220 38 38;
+
+  --color-success: 22 163 74;
+  --color-success-muted: 220 252 231;
 }
 
 /* =====================
@@ -110,6 +140,15 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: rgb(var(--color-text-muted));
+  }
+
+  /* Hide browser-native password reveal button (Chrome, Edge, IE) */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+  input[type="password"]::-webkit-textfield-decoration-container {
+    display: none;
   }
 }
 

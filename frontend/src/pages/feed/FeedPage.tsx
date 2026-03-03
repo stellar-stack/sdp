@@ -23,14 +23,14 @@ export default function FeedPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Your Feed</h1>
+          <h1 className="text-xl font-bold text-text-primary tracking-tight">Your Feed</h1>
           <p className="text-xs text-text-muted mt-0.5">Posts from communities you follow</p>
         </div>
         {/* Desktop create button */}
         <button
           onClick={() => openModal('create-post')}
-          className="hidden lg:flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5 active:scale-95"
-          style={{ background: '#00ff84', color: '#0e0e0e', boxShadow: '0 4px 12px rgba(0,255,132,0.25)' }}
+          className="hidden lg:flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5 active:scale-95 bg-accent"
+          style={{ color: '#0e0e0e', boxShadow: '0 4px 12px rgb(var(--color-accent) / 0.25)' }}
         >
           <Plus size={15} />
           New Post
@@ -82,8 +82,8 @@ export default function FeedPage() {
         whileTap={{ scale: 0.9 }}
         whileHover={{ scale: 1.08 }}
         onClick={() => openModal('create-post')}
-        className="fixed bottom-24 right-5 z-40 h-14 w-14 rounded-full flex items-center justify-center lg:hidden"
-        style={{ background: '#00ff84', boxShadow: '0 4px 24px rgba(0,255,132,0.5)' }}
+        className="fixed bottom-24 right-5 z-40 h-14 w-14 rounded-full flex items-center justify-center lg:hidden bg-accent"
+        style={{ boxShadow: '0 4px 24px rgb(var(--color-accent) / 0.5)' }}
         aria-label="Create post"
       >
         <Plus size={24} style={{ color: '#0e0e0e' }} strokeWidth={2.5} />

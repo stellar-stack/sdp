@@ -12,6 +12,7 @@ import { useMessageStore } from '@/store/message.store'
 import { useLogout } from '@/queries/auth.queries'
 import { useMyCommunities } from '@/queries/communities.queries'
 import { cn, getInitials, getMediaUrl } from '@/lib/utils'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 const navLinks = [
   { to: '/feed', icon: Home, label: 'Feed' },
@@ -48,18 +49,17 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 hidden h-full w-64 flex-col lg:flex"
-      style={{ background: '#111111', borderRight: '1px solid #2d2d2d' }}
+      className="fixed left-0 top-0 hidden h-full w-64 flex-col lg:flex bg-bg-secondary border-r border-border"
     >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 mb-2">
         <div
-          className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: 'rgb(0 255 132)', boxShadow: '0 0 12px rgb(0 255 132 / 0.4)' }}
+          className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-accent"
+          style={{ boxShadow: '0 0 12px rgb(var(--color-accent) / 0.4)' }}
         >
           <span className="font-black text-sm" style={{ color: '#0e0e0e' }}>V</span>
         </div>
-        <span className="text-xl font-bold tracking-tight text-white">Voyage</span>
+        <span className="text-xl font-bold tracking-tight text-text-primary">Voyage</span>
       </div>
 
       {/* Scrollable nav area */}
@@ -170,15 +170,14 @@ export default function Sidebar() {
 
       {/* Bottom section */}
       <div className="px-3 pb-5 space-y-2 border-t border-border pt-4">
+        {/* Theme toggle */}
+        <ThemeToggle />
+
         {/* Create post */}
         <button
           onClick={() => openModal('create-post')}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 hover:-translate-y-0.5 active:scale-95"
-          style={{
-            background: 'rgb(0 255 132)',
-            color: '#0e0e0e',
-            boxShadow: '0 4px 16px rgb(0 255 132 / 0.25)',
-          }}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all duration-150 hover:-translate-y-0.5 active:scale-95 bg-accent"
+          style={{ color: '#0e0e0e', boxShadow: '0 4px 16px rgb(var(--color-accent) / 0.25)' }}
         >
           <Plus size={16} />
           New Post
@@ -194,12 +193,12 @@ export default function Sidebar() {
               src={getMediaUrl(user.profile_picture)!}
               alt={user.username}
               className="h-9 w-9 rounded-full object-cover"
-              style={{ border: '2px solid rgb(0 255 132 / 0.4)' }}
+              style={{ border: '2px solid rgb(var(--color-accent) / 0.4)' }}
             />
           ) : (
             <div
-              className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: 'rgb(0 40 22)', border: '2px solid rgb(0 255 132 / 0.3)' }}
+              className="h-9 w-9 rounded-full flex items-center justify-center shrink-0 bg-accent-muted"
+              style={{ border: '2px solid rgb(var(--color-accent) / 0.3)' }}
             >
               <span className="text-accent text-sm font-bold">
                 {getInitials(user?.first_name ?? '', user?.last_name ?? '')}

@@ -27,6 +27,10 @@ class CommentCreateThrottle(UserRateThrottle):
     scope = 'comment_create'
 
 
+class SuggestionThrottle(UserRateThrottle):
+    scope = 'suggestion'
+
+
 def _run_ai_moderation(user, content_type: str, obj, text: str):
     """
     Run AI moderation on text content. If flagged, soft-delete the object,
@@ -197,7 +201,7 @@ def get_comments(request, post_id):
     post = get_object_or_404(Post, id=post_id, is_deleted=False)
     comments = post.comments.filter(
         parent__isnull=True, is_deleted=False
-    ).select_related('user').prefetch_related('replies__user')
+    ).select_related('user').prefetch_related('replies__user').order_by('-created_at')
 
     paginator = PageNumberPagination()
     paginator.page_size = 20
@@ -269,3 +273,28 @@ def list_bookmarks(request):
     paginated = paginator.paginate_queryset(bookmarks, request)
     serializer = BookmarkSerializer(paginated, many=True, context={'request': request})
     return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([SuggestionThrottle])
+def ai_suggest_post(request):
+    """
+    Returns AI-generated caption suggestion and community recommendation.
+    Request body: { "content": "...", "caption": "..." }
+    """
+    from communities.models import Community
+    from .ai_suggestions import get_post_suggestion
+
+    content = (request.data.get('content') or '').strip()
+    caption = (request.data.get('caption') or '').strip()
+
+    if len(content + caption) < 20:
+        return Response({'suggested_caption': None, 'suggested_community': None})
+
+    communities = list(
+        Community.objects.values('id', 'name').order_by('name')[:30]
+    )
+
+    result = get_post_suggestion(content, caption, communities)
+    return Response(result)

@@ -73,4 +73,12 @@ export const postsApi = {
     const res = await api.get<PaginatedResponse<Bookmark>>(`/posts/bookmarks/?page=${page}`)
     return res.data
   },
+
+  getSuggestion: async (payload: { content?: string; caption?: string }) => {
+    const res = await api.post<{
+      suggested_caption: string | null
+      suggested_community: { id: number; name: string } | null
+    }>('/posts/ai-suggest/', payload)
+    return res.data
+  },
 }

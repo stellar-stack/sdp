@@ -1,9 +1,11 @@
-import { useParams } from 'react-router-dom'
-import { Users, List, PenSquare } from 'lucide-react'
-import { useCommunityDetail, useToggleJoin } from '@/queries/communities.queries'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Users, List, PenSquare, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useCommunityDetail, useToggleJoin, useDeleteCommunity } from '@/queries/communities.queries'
 import { useCommunityFeedQuery } from '@/queries/posts.queries'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 import { useUIStore } from '@/store/ui.store'
+import { useAuthStore } from '@/store/auth.store'
 import { UserAvatar } from '@/components/user/UserAvatar'
 import { PostCard } from '@/components/post/PostCard'
 import { PostSkeleton } from '@/components/post/PostSkeleton'
@@ -13,9 +15,24 @@ import { formatCount, getMediaUrl } from '@/lib/utils'
 export default function CommunityDetailPage() {
   const { communityId } = useParams<{ communityId: string }>()
   const id = Number(communityId)
+  const navigate = useNavigate()
   const { openModal } = useUIStore()
+  const currentUser = useAuthStore((s) => s.user)
+  const isAdmin = currentUser?.role === 'ADMIN'
   const { data: community, isLoading } = useCommunityDetail(id)
   const { mutate: toggleJoin, isPending: joiningPending } = useToggleJoin(id)
+  const { mutate: deleteCommunity, isPending: deletePending } = useDeleteCommunity()
+
+  const handleDelete = () => {
+    if (!confirm(`Delete community "${community?.name}"? This cannot be undone.`)) return
+    deleteCommunity(id, {
+      onSuccess: () => {
+        toast.success('Community deleted')
+        navigate('/communities')
+      },
+      onError: () => toast.error('Failed to delete community'),
+    })
+  }
   const { data: feedData, isLoading: feedLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useCommunityFeedQuery(id)
   const sentinelRef = useInfiniteScroll(() => {
@@ -60,13 +77,35 @@ export default function CommunityDetailPage() {
                 {formatCount(community.members_count)} members
               </span>
             </div>
-            <button
-              onClick={() => toggleJoin()}
-              disabled={joiningPending}
-              className={community.is_member ? 'btn-secondary text-sm min-w-[72px]' : 'btn-primary text-sm min-w-[72px]'}
-            >
-              {joiningPending ? '…' : community.is_member ? 'Leave' : 'Join'}
-            </button>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => navigate(`/communities/${id}/edit`)}
+                    className="p-2 rounded-lg text-text-muted hover:text-text-primary transition-colors bg-bg-elevated"
+                    title="Edit community"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deletePending}
+                    className="p-2 rounded-lg text-danger hover:text-red-400 transition-colors"
+                    style={{ background: 'rgba(239,68,68,0.1)' }}
+                    title="Delete community"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => toggleJoin()}
+                disabled={joiningPending}
+                className={community.is_member ? 'btn-secondary text-sm min-w-[72px]' : 'btn-primary text-sm min-w-[72px]'}
+              >
+                {joiningPending ? '…' : community.is_member ? 'Leave' : 'Join'}
+              </button>
+            </div>
           </div>
 
           <p className="text-text-secondary text-sm leading-[1.7]">{community.about}</p>

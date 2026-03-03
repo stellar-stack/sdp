@@ -5,6 +5,7 @@ from .views import (
     add_comment, get_comments,
     get_post, edit_post, delete_post,
     toggle_bookmark, list_bookmarks,
+    ai_suggest_post,
 )
 
 urlpatterns = [
@@ -16,6 +17,7 @@ urlpatterns = [
     path('share/', share_post, name='share-post'),
     path('comment/', add_comment, name='add-comment'),
     path('bookmarks/', list_bookmarks, name='list-bookmarks'),
+    path('ai-suggest/', ai_suggest_post, name='ai-suggest-post'),
     path('<int:post_id>/', get_post, name='get-post'),
     path('<int:post_id>/comments/', get_comments, name='get-comments'),
     path('<int:post_id>/edit/', edit_post, name='edit-post'),
