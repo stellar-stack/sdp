@@ -8,22 +8,36 @@ import { CommunityCard } from '@/components/community/CommunityCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 
-const CATEGORY_FILTERS = ['All', 'Programming', 'AI / ML', 'Web Dev', 'Cybersecurity', 'DevOps', 'Data Science', 'Open Source', 'Mobile Dev']
+const FILTERS = [
+  'All',
+  'Python',
+  'Java',
+  'C++',
+  'Cybersecurity',
+  'Artificial Intelligence',
+  'Machine Learning',
+  'Data Science',
+  'Cloud Computing',
+  'Web Development',
+  'Blockchain',
+]
 
 export default function CommunitiesPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.role === 'ADMIN'
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [activeFilter, setActiveFilter] = useState('All')
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCommunitiesQuery()
   const sentinelRef = useInfiniteScroll(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage()
   }, !!hasNextPage)
 
-  const communities = (data?.pages.flatMap((p) => p.results) ?? []).filter((c) =>
-    search ? c.name.toLowerCase().includes(search.toLowerCase()) : true
-  )
+  const communities = (data?.pages.flatMap((p) => p.results) ?? []).filter((c) => {
+    const matchesSearch = search ? c.name.toLowerCase().includes(search.toLowerCase()) : true
+    const matchesFilter = activeFilter === 'All' || c.name.toLowerCase().includes(activeFilter.toLowerCase())
+    return matchesSearch && matchesFilter
+  })
 
   return (
     <div className="space-y-6">
@@ -55,22 +69,25 @@ export default function CommunitiesPage() {
         />
       </div>
 
-      {/* Category chips — horizontal scroll */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {CATEGORY_FILTERS.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150"
-            style={
-              activeCategory === cat
-                ? { background: 'rgb(var(--color-accent))', color: '#0e0e0e' }
-                : { background: 'rgb(var(--color-bg-card))', border: '1px solid rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }
-            }
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Filter chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+        {FILTERS.map((f) => {
+          const active = activeFilter === f
+          return (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 active:scale-95"
+              style={
+                active
+                  ? { background: 'rgb(var(--color-accent))', color: '#0e0e0e', boxShadow: '0 2px 8px rgb(var(--color-accent) / 0.3)' }
+                  : { background: 'rgb(var(--color-bg-card))', border: '1px solid rgb(var(--color-border))', color: 'rgb(var(--color-text-muted))' }
+              }
+            >
+              {f}
+            </button>
+          )
+        })}
       </div>
 
       {/* Loading skeletons — 2 column grid */}

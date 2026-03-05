@@ -84,8 +84,15 @@ def get_feed(request):
     if cached:
         return Response(cached)
 
+    from communities.models import CommunityMembership
+    from django.db.models import Q
+    joined_community_ids = CommunityMembership.objects.filter(
+        user=request.user
+    ).values_list('community_id', flat=True)
+
     posts = Post.objects.filter(
-        is_deleted=False
+        Q(is_deleted=False) &
+        (Q(community_id__isnull=True) | Q(community_id__in=joined_community_ids))
     ).select_related(
         'user', 'community'
     ).prefetch_related(

@@ -39,6 +39,15 @@ export function PostCard({ post }: PostCardProps) {
   const isAdminOrMod = currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR'
   const isLiked = post.user_reaction === 'LIKE'
 
+  const [expanded, setExpanded] = useState(false)
+  const [isClamped, setIsClamped] = useState(false)
+  const contentRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    const el = contentRef.current
+    if (el) setIsClamped(el.scrollHeight > el.clientHeight + 1)
+  }, [post.content, post.caption])
+
   useEffect(() => {
     if (!showShareMenu) return
     const handler = (e: MouseEvent) => {
@@ -166,14 +175,33 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* Caption + content */}
-        {post.caption && (
-          <p className="font-semibold text-text-primary text-sm leading-snug line-clamp-2">{post.caption}</p>
-        )}
-        {post.content && (
-          <p className="text-text-secondary text-sm leading-[1.7] whitespace-pre-wrap line-clamp-3">
-            {post.content}
-          </p>
-        )}
+        <div>
+          {post.caption && (
+            <p
+              ref={post.content ? undefined : contentRef}
+              className={cn('font-semibold text-text-primary text-sm leading-snug', !expanded && !post.content && 'line-clamp-2')}
+            >
+              {post.caption}
+            </p>
+          )}
+          {post.content && (
+            <p
+              ref={contentRef}
+              className={cn('text-text-secondary text-sm leading-[1.7] whitespace-pre-wrap mt-1', !expanded && 'line-clamp-4')}
+            >
+              {post.content}
+            </p>
+          )}
+          {isClamped && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-1 text-xs font-semibold transition-colors"
+              style={{ color: 'rgb(var(--color-accent))' }}
+            >
+              {expanded ? 'See less' : 'See more'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Media below text ── */}
