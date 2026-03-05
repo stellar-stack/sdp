@@ -33,6 +33,10 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      - USE_POSTGRES=True
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./media:/app/media
     depends_on:
