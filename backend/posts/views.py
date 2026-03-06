@@ -153,13 +153,19 @@ def user_posts(request, username):
 @permission_classes([IsAuthenticated])
 def toggle_reaction(request):
     post_id = request.data.get('post_id')
-    reaction_type = request.data.get('reaction_type', 'LIKE').upper()
+    reaction_type_raw = request.data.get('reaction_type')
 
+    post = get_object_or_404(Post, id=post_id, is_deleted=False)
+
+    # null reaction_type = explicit unlike / remove reaction
+    if reaction_type_raw is None:
+        PostReaction.objects.filter(user=request.user, post=post).delete()
+        return Response({'reacted': False, 'reaction_type': None})
+
+    reaction_type = reaction_type_raw.upper()
     valid_types = [r[0] for r in PostReaction.REACTION_TYPES]
     if reaction_type not in valid_types:
         return Response({'error': f'Invalid reaction type. Choose from {valid_types}'}, status=400)
-
-    post = get_object_or_404(Post, id=post_id, is_deleted=False)
 
     existing = PostReaction.objects.filter(user=request.user, post=post).first()
     if existing:

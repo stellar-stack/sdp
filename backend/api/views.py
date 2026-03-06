@@ -315,3 +315,30 @@ def promote_user(request, user_id):
     user.role = new_role
     user.save(update_fields=['role'])
     return Response({'success': True, 'new_role': new_role})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def ban_user(request, user_id):
+    """Admin can permanently ban (or unban) a user by toggling is_active."""
+    if request.user.role != 'ADMIN':
+        return Response({'detail': 'Only admins can ban users'}, status=403)
+
+    user = get_object_or_404(User, id=user_id)
+
+    if user.role == 'ADMIN':
+        return Response({'detail': 'Cannot ban another admin'}, status=400)
+
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+
+    if not user.is_active:
+        from moderation.models import Notification
+        Notification.objects.create(
+            user=user,
+            notif_type='SUSPENSION',
+            message='Your account has been permanently banned by an administrator.',
+        )
+
+    action = 'banned' if not user.is_active else 'unbanned'
+    return Response({'success': True, 'is_active': user.is_active, 'action': action})

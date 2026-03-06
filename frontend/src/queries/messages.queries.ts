@@ -19,7 +19,12 @@ export function useMessagesQuery(conversationId: number) {
     enabled: !!conversationId,
     select: (data) => ({
       ...data,
-      pages: [...data.pages].reverse(), // oldest first
+      // API returns newest-first within each page; reverse pages (older batches first)
+      // and reverse results within each page so overall order is oldest→newest
+      pages: [...data.pages].reverse().map((p) => ({
+        ...p,
+        results: [...p.results].reverse(),
+      })),
     }),
   })
 }
@@ -29,8 +34,10 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: ({ recipient, content }: { recipient: string; content: string }) =>
       messagesApi.sendMessage(recipient, content),
-    onSuccess: () => {
+    onSuccess: (msg) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.CONVERSATIONS })
+      // Refresh the message list for this conversation if it's cached
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.MESSAGES(msg.conversation_id) })
     },
   })
 }

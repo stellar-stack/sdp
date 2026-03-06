@@ -120,14 +120,25 @@ def _push_new_message(conversation, message, recipient):
         if not channel_layer:
             return
 
+        sender = message.sender
         async_to_sync(channel_layer.group_send)(
             f'conversation_{conversation.id}',
             {
                 'type': 'chat_message',
                 'data': {
                     'id': message.id,
-                    'sender': message.sender.username,
+                    'sender': {
+                        'id': sender.id,
+                        'username': sender.username,
+                        'first_name': sender.first_name,
+                        'last_name': sender.last_name,
+                        'profile_picture': (
+                            str(sender.profile_picture) if sender.profile_picture else None
+                        ),
+                    },
                     'content': message.content,
+                    'is_read': False,
+                    'is_deleted': False,
                     'created_at': message.created_at.isoformat(),
                     'conversation_id': conversation.id,
                 },

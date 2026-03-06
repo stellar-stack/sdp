@@ -13,9 +13,10 @@ export function useMessageSocket(conversationId: number | null) {
     (raw: unknown) => {
       const msg = raw as WSMessage
 
-      // Append new message to the messages cache without refetching
+      // Prepend to pages[0] (newest raw page). select() reverses pages+results,
+      // so the new message ends up at the bottom (newest position) in the UI.
       queryClient.setQueryData(
-        QUERY_KEYS.MESSAGES(msg.conversation_id),
+        QUERY_KEYS.MESSAGES(Number(msg.conversation_id)),
         (old: InfiniteData<PaginatedResponse<Message>> | undefined) => {
           if (!old) return old
           const newMessage: Message = {
@@ -29,8 +30,8 @@ export function useMessageSocket(conversationId: number | null) {
           return {
             ...old,
             pages: old.pages.map((page, i) =>
-              i === old.pages.length - 1
-                ? { ...page, results: [...page.results, newMessage] }
+              i === 0
+                ? { ...page, results: [newMessage, ...page.results] }
                 : page
             ),
           }

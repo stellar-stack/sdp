@@ -103,4 +103,11 @@ export const authApi = {
     const res = await api.post(`/auth/admin/users/${userId}/promote/`, { role })
     return res.data
   },
+
+  banUser: async (userId: number) => {
+    const res = await api.post<{ success: boolean; is_active: boolean; action: string }>(
+      `/auth/admin/users/${userId}/ban/`
+    )
+    return res.data
+  },
 }

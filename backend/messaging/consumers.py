@@ -44,10 +44,20 @@ class MessagingConsumer(AsyncWebsocketConsumer):
                     'type': 'chat_message',
                     'data': {
                         'id': message.id,
-                        'sender': self.user.username,
+                        'sender': {
+                            'id': self.user.id,
+                            'username': self.user.username,
+                            'first_name': self.user.first_name,
+                            'last_name': self.user.last_name,
+                            'profile_picture': (
+                                str(self.user.profile_picture) if self.user.profile_picture else None
+                            ),
+                        },
                         'content': message.content,
+                        'is_read': False,
+                        'is_deleted': False,
                         'created_at': message.created_at.isoformat(),
-                        'conversation_id': self.conversation_id,
+                        'conversation_id': int(self.conversation_id),
                     },
                 },
             )

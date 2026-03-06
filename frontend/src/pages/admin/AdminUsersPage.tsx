@@ -51,8 +51,17 @@ function UserRow({ user, onRefresh }: { user: UserAdmin; onRefresh: () => void }
     onError: (err) => toast.error(extractErrorMessage(err)),
   })
 
+  const { mutate: toggleBan, isPending: banning } = useMutation({
+    mutationFn: () => authApi.banUser(user.id),
+    onSuccess: (data) => {
+      toast.success(data.action === 'banned' ? `@${user.username} banned` : `@${user.username} unbanned`)
+      onRefresh()
+    },
+    onError: (err) => toast.error(extractErrorMessage(err)),
+  })
+
   const isSuspended = user.suspended_until && new Date(user.suspended_until) > new Date()
-  const acting = suspending || clearing || promoting
+  const acting = suspending || clearing || promoting || banning
 
   return (
     <div className="card p-4 space-y-3">
@@ -160,6 +169,22 @@ function UserRow({ user, onRefresh }: { user: UserAdmin; onRefresh: () => void }
             className="btn-secondary text-xs"
           >
             Remove Moderator
+          </button>
+        )}
+
+        {/* Ban / unban */}
+        {user.role !== 'ADMIN' && (
+          <button
+            onClick={() => toggleBan()}
+            disabled={acting}
+            className={cn(
+              'btn-secondary text-xs',
+              user.is_active
+                ? 'text-red-500 hover:bg-red-500/10'
+                : 'text-green-500 hover:bg-green-500/10'
+            )}
+          >
+            {user.is_active ? 'Ban User' : 'Unban User'}
           </button>
         )}
       </div>

@@ -4,7 +4,7 @@ from .views import (
     logout, register, verify_email,
     get_my_profile, get_user_profile, update_my_profile,
     toggle_follow, get_followers, get_following, search_users, list_all_users,
-    suspend_user, clear_violations, promote_user,
+    suspend_user, clear_violations, promote_user, ban_user,
 )
 from .oauth_views import google_oauth, github_oauth
 
@@ -38,4 +38,5 @@ urlpatterns = [
     path('admin/users/<int:user_id>/suspend/', suspend_user, name='suspend-user'),
     path('admin/users/<int:user_id>/violations/clear/', clear_violations, name='clear-violations'),
     path('admin/users/<int:user_id>/promote/', promote_user, name='promote-user'),
+    path('admin/users/<int:user_id>/ban/', ban_user, name='ban-user'),
 ]
