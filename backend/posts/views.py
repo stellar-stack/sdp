@@ -205,10 +205,16 @@ def add_comment(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_comments(request, post_id):
+    from django.db.models import Prefetch
     post = get_object_or_404(Post, id=post_id, is_deleted=False)
     comments = post.comments.filter(
         parent__isnull=True, is_deleted=False
-    ).select_related('user').prefetch_related('replies__user').order_by('-created_at')
+    ).select_related('user').prefetch_related(
+        Prefetch(
+            'replies',
+            queryset=Comment.objects.filter(is_deleted=False).select_related('user'),
+        )
+    ).order_by('-created_at')
 
     paginator = PageNumberPagination()
     paginator.page_size = 20
@@ -244,6 +250,18 @@ def delete_post(request, post_id):
     if post.user_id != request.user.id and request.user.role not in ('ADMIN', 'MODERATOR'):
         return Response({'error': 'Not authorized'}, status=403)
     post.soft_delete()
+    # Bust the Redis feed cache so the deleted post doesn't appear on the next refetch
+    cache.clear()
+    return Response({'deleted': True})
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id, is_deleted=False)
+    if comment.user_id != request.user.id and request.user.role not in ('ADMIN', 'MODERATOR'):
+        return Response({'error': 'Not authorized'}, status=403)
+    comment.soft_delete()
     return Response({'deleted': True})
 
 
@@ -273,7 +291,8 @@ def toggle_bookmark(request, post_id):
 @permission_classes([IsAuthenticated])
 def list_bookmarks(request):
     bookmarks = PostBookmark.objects.filter(
-        user=request.user
+        user=request.user,
+        post__is_deleted=False,
     ).select_related('post__user').order_by('-created_at')
     paginator = PageNumberPagination()
     paginator.page_size = 10

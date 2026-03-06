@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Trash2 } from 'lucide-react'
 import { UserAvatar } from '@/components/user/UserAvatar'
 import { CommentInput } from './CommentInput'
 import { formatDate } from '@/lib/utils'
+import { useAuthStore } from '@/store/auth.store'
+import { useUIStore } from '@/store/ui.store'
 import type { Comment } from '@/types'
 
 interface CommentItemProps {
@@ -13,6 +16,13 @@ interface CommentItemProps {
 export function CommentItem({ comment, postId }: CommentItemProps) {
   const [showReply, setShowReply] = useState(false)
   const [showReplies, setShowReplies] = useState(false)
+
+  const currentUser = useAuthStore((s) => s.user)
+  const { openModal } = useUIStore()
+
+  const isOwner = currentUser?.username === comment.user.username
+  const isAdminOrMod = currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR'
+  const canDelete = isOwner || isAdminOrMod
 
   const replyCount = comment.reply_count ?? comment.replies.length
 
@@ -43,6 +53,15 @@ export function CommentItem({ comment, postId }: CommentItemProps) {
             >
               Reply
             </button>
+            {canDelete && (
+              <button
+                onClick={() => openModal('confirm-delete', { type: 'comment', id: comment.id, postId })}
+                className="text-xs text-text-muted hover:text-danger transition-colors flex items-center gap-0.5"
+              >
+                <Trash2 size={11} />
+                Delete
+              </button>
+            )}
           </div>
         </div>
       </div>

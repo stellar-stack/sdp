@@ -8,9 +8,10 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/auth.store'
-import { useToggleReaction, useToggleBookmark, useDeletePost, useSharePost } from '@/queries/posts.queries'
+import { useToggleReaction, useToggleBookmark, useSharePost } from '@/queries/posts.queries'
 import { useUIStore } from '@/store/ui.store'
 import { UserAvatar } from '@/components/user/UserAvatar'
+import { VideoPlayer } from '@/components/post/VideoPlayer'
 import { cn, formatDate, formatCount } from '@/lib/utils'
 import type { Post } from '@/types'
 
@@ -33,7 +34,6 @@ export function PostCard({ post }: PostCardProps) {
   const { mutate: toggleReaction } = useToggleReaction(post.id)
   const { mutate: toggleBookmark } = useToggleBookmark()
   const { mutate: sharePost } = useSharePost()
-  const { mutate: deletePost } = useDeletePost()
 
   const isOwner = currentUser?.username === post.user.username
   const isAdminOrMod = currentUser?.role === 'ADMIN' || currentUser?.role === 'MODERATOR'
@@ -77,11 +77,7 @@ export function PostCard({ post }: PostCardProps) {
   }
 
   const handleDelete = () => {
-    if (!confirm('Delete this post?')) return
-    deletePost(post.id, {
-      onSuccess: () => toast.success('Post deleted'),
-      onError: () => toast.error('Failed to delete post'),
-    })
+    openModal('confirm-delete', { type: 'post', id: post.id })
   }
 
   return (
@@ -216,11 +212,7 @@ export function PostCard({ post }: PostCardProps) {
         </Link>
       )}
       {post.post_type === 'VIDEO' && post.video && (
-        <video
-          src={post.video}
-          controls
-          className="w-full aspect-video bg-black"
-        />
+        <VideoPlayer src={post.video} />
       )}
 
       {/* ── Actions ── */}

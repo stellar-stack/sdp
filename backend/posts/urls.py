@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     create_post, get_feed, community_feed, user_posts,
     toggle_reaction, share_post,
-    add_comment, get_comments,
+    add_comment, get_comments, delete_comment,
     get_post, edit_post, delete_post,
     toggle_bookmark, list_bookmarks,
     ai_suggest_post,
@@ -23,4 +23,5 @@ urlpatterns = [
     path('<int:post_id>/edit/', edit_post, name='edit-post'),
     path('<int:post_id>/delete/', delete_post, name='delete-post'),
     path('<int:post_id>/bookmark/', toggle_bookmark, name='toggle-bookmark'),
+    path('comments/<int:comment_id>/delete/', delete_comment, name='delete-comment'),
 ]

@@ -1,6 +1,7 @@
 import {
   useInfiniteQuery,
   useMutation,
+  useMutationState,
   useQuery,
   useQueryClient,
   type InfiniteData,
@@ -87,15 +88,53 @@ export function useBookmarksQuery() {
 export function useCreatePost(communityId?: number) {
   const qc = useQueryClient()
   return useMutation({
+    mutationKey: ['create-post'],
     mutationFn: (payload: CreatePostPayload) =>
       postsApi.createPost({ ...payload, community: communityId }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.FEED })
+    onSuccess: (newPost) => {
+      // Prepend the new post to the feed immediately so it appears without waiting for refetch
+      qc.setQueryData(
+        QUERY_KEYS.FEED,
+        (old: InfiniteData<PaginatedResponse<Post>> | undefined) => {
+          if (!old || !old.pages.length) return old
+          return {
+            ...old,
+            pages: [
+              { ...old.pages[0], results: [newPost, ...old.pages[0].results] },
+              ...old.pages.slice(1),
+            ],
+          }
+        }
+      )
       if (communityId) {
-        qc.invalidateQueries({ queryKey: QUERY_KEYS.COMMUNITY_FEED(communityId) })
+        qc.setQueryData(
+          QUERY_KEYS.COMMUNITY_FEED(communityId),
+          (old: InfiniteData<PaginatedResponse<Post>> | undefined) => {
+            if (!old || !old.pages.length) return old
+            return {
+              ...old,
+              pages: [
+                { ...old.pages[0], results: [newPost, ...old.pages[0].results] },
+                ...old.pages.slice(1),
+              ],
+            }
+          }
+        )
+      }
+      // Invalidate in the background to sync any server-side ordering/state
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.FEED, refetchType: 'none' })
+      if (communityId) {
+        qc.invalidateQueries({ queryKey: QUERY_KEYS.COMMUNITY_FEED(communityId), refetchType: 'none' })
       }
     },
   })
+}
+
+export function useIsCreatingPost() {
+  const states = useMutationState({
+    filters: { mutationKey: ['create-post'], status: 'pending' },
+  })
+  return states.length > 0
 }
 
 export function useEditPost() {
@@ -175,9 +214,101 @@ export function useDeletePost() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (postId: number) => postsApi.deletePost(postId),
-    onSuccess: () => {
+
+    onMutate: async (postId) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.FEED })
+      await qc.cancelQueries({ queryKey: ['posts', 'community'] })
+      await qc.cancelQueries({ queryKey: ['posts', 'user'] })
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.BOOKMARKS })
+
+      const previousFeed = qc.getQueryData(QUERY_KEYS.FEED)
+      const previousBookmarks = qc.getQueryData(QUERY_KEYS.BOOKMARKS)
+      const allCommunityFeeds = qc.getQueriesData<InfiniteData<PaginatedResponse<Post>>>({ queryKey: ['posts', 'community'] })
+      const allUserFeeds = qc.getQueriesData<InfiniteData<PaginatedResponse<Post>>>({ queryKey: ['posts', 'user'] })
+
+      const removePost = (page: PaginatedResponse<Post>) => ({
+        ...page,
+        results: page.results.filter((p) => p.id !== postId),
+      })
+
+      qc.setQueryData(
+        QUERY_KEYS.FEED,
+        (old: InfiniteData<PaginatedResponse<Post>> | undefined) =>
+          old ? { ...old, pages: old.pages.map(removePost) } : old
+      )
+      for (const [key, data] of allCommunityFeeds) {
+        if (data) qc.setQueryData(key as QueryKey, { ...data, pages: data.pages.map(removePost) })
+      }
+      for (const [key, data] of allUserFeeds) {
+        if (data) qc.setQueryData(key as QueryKey, { ...data, pages: data.pages.map(removePost) })
+      }
+      qc.setQueryData(
+        QUERY_KEYS.BOOKMARKS,
+        (old: InfiniteData<PaginatedResponse<{ id: number; post: Post; created_at: string }>> | undefined) =>
+          old
+            ? {
+                ...old,
+                pages: old.pages.map((page) => ({
+                  ...page,
+                  results: page.results.filter((b) => b.post.id !== postId),
+                })),
+              }
+            : old
+      )
+      qc.removeQueries({ queryKey: QUERY_KEYS.POST(postId) })
+
+      return { previousFeed, previousBookmarks, allCommunityFeeds, allUserFeeds }
+    },
+
+    onError: (_err, postId, context) => {
+      if (context?.previousFeed) qc.setQueryData(QUERY_KEYS.FEED, context.previousFeed)
+      if (context?.previousBookmarks) qc.setQueryData(QUERY_KEYS.BOOKMARKS, context.previousBookmarks)
+      for (const [key, data] of context?.allCommunityFeeds ?? []) qc.setQueryData(key as QueryKey, data)
+      for (const [key, data] of context?.allUserFeeds ?? []) qc.setQueryData(key as QueryKey, data)
+    },
+
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.FEED })
       qc.invalidateQueries({ queryKey: ['posts', 'community'] })
+      qc.invalidateQueries({ queryKey: ['posts', 'user'] })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.BOOKMARKS })
+    },
+  })
+}
+
+export function useDeleteComment(postId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (commentId: number) => postsApi.deleteComment(commentId),
+
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.COMMENTS(postId) })
+      const previousComments = qc.getQueryData(QUERY_KEYS.COMMENTS(postId))
+
+      qc.setQueryData(
+        QUERY_KEYS.COMMENTS(postId),
+        (old: InfiniteData<PaginatedResponse<Comment>> | undefined) =>
+          old
+            ? {
+                ...old,
+                pages: old.pages.map((page) => ({
+                  ...page,
+                  results: page.results.filter((c) => c.id !== commentId),
+                })),
+              }
+            : old
+      )
+
+      return { previousComments }
+    },
+
+    onError: (_err, _commentId, context) => {
+      if (context?.previousComments) qc.setQueryData(QUERY_KEYS.COMMENTS(postId), context.previousComments)
+    },
+
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.COMMENTS(postId) })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.POST(postId) })
     },
   })
 }

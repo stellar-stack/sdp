@@ -4,6 +4,7 @@ import MobileNavBar from './MobileNavBar'
 import { EditPostModal } from '@/components/post/EditPostModal'
 import { CreatePostModal } from '@/components/post/CreatePostModal'
 import { ReportModal } from '@/components/moderation/ReportModal'
+import { ConfirmDeleteModal } from '@/components/post/ConfirmDeleteModal'
 
 export default function AppShell() {
   return (
@@ -25,6 +26,7 @@ export default function AppShell() {
       <CreatePostModal />
       <EditPostModal />
       <ReportModal />
+      <ConfirmDeleteModal />
     </div>
   )
 }

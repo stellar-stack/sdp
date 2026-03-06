@@ -57,6 +57,10 @@ export const postsApi = {
     return res.data
   },
 
+  deleteComment: async (commentId: number) => {
+    await api.delete(`/posts/comments/${commentId}/delete/`)
+  },
+
   getComments: async (postId: number, page = 1) => {
     const res = await api.get<PaginatedResponse<Comment>>(
       `/posts/${postId}/comments/?page=${page}`

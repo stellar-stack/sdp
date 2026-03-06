@@ -1,6 +1,6 @@
 import { Plus, Newspaper } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useFeedQuery } from '@/queries/posts.queries'
+import { useFeedQuery, useIsCreatingPost } from '@/queries/posts.queries'
 import { useUIStore } from '@/store/ui.store'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 import { PostCard } from '@/components/post/PostCard'
@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom'
 export default function FeedPage() {
   const { openModal } = useUIStore()
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeedQuery()
+  const isCreatingPost = useIsCreatingPost()
 
   const sentinelRef = useInfiniteScroll(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage()
@@ -60,6 +61,7 @@ export default function FeedPage() {
 
       {/* Posts */}
       <div className="space-y-4">
+        {isCreatingPost && <PostSkeleton />}
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
